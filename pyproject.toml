@@ -1,0 +1,15 @@
+[project]
+name = "netmonitor-agent"
+version = "1.0.0"
+description = "User-level NetHogs monitoring agent for the NetMonitor GNOME extension"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"

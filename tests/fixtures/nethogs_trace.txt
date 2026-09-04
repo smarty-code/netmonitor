@@ -1,0 +1,13 @@
+Refreshing:
+/usr/bin/google-chrome/12345/1000 0.39 4.82
+/usr/bin/dockerd/2222/0 0.40 1.42
+/usr/share/code/code/3333/1000 0.20 0.71
+unknown TCP/0/0 0.01 0.02
+Adding local address: 192.168.1.10
+Ethernet link detected
+Refreshing:
+sshd: user@pts/7/656215/32076 0.0730469 0.0222659
+/usr/lib/firefox/firefox/4062/1000 0.154688 0.230469
+unknown TCP/0/0 0 0
+Unknown connection: 10.0.0.1:443-10.0.0.2:51234
+Refreshing:
