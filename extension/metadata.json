@@ -6,5 +6,5 @@
     "url": "https://github.com/smarty-code/netmonitor",
     "settings-schema": "org.gnome.shell.extensions.netmonitor",
     "gettext-domain": "netmonitor",
-    "version": 2
+    "version": 3
 }

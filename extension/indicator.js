@@ -14,7 +14,7 @@ import {MonitorMenu} from './menu.js';
 import {setTextIfChanged, stabilizeRateLabel} from './ui.js';
 
 export const NetMonitorIndicator = GObject.registerClass({
-    GTypeName: 'NetMonitorIndicator',
+    GTypeName: 'NetMonitorIndicatorV3',
 }, class NetMonitorIndicator extends PanelMenu.Button {
     _init(extension) {
         super._init(0.5, _('Network Monitor'), false);
@@ -152,12 +152,17 @@ export const NetMonitorIndicator = GObject.registerClass({
             throw new AgentError('not_found', _('Process is no longer available'));
 
         const dialog = new ModalDialog.ModalDialog();
+        const total = Number(proc.total);
+        const totalRate = Number.isFinite(total)
+            ? total
+            : (Number(proc.download) || 0) + (Number(proc.upload) || 0);
         const body = [
             proc.name,
             `${_('PID')}: ${proc.pid}`,
             `${_('Command')}: ${proc.command || '—'}`,
-            `↓ ${formatRate(proc.download)}`,
-            `↑ ${formatRate(proc.upload)}`,
+            `${_('Download')}: ${formatRate(proc.download)}`,
+            `${_('Upload')}: ${formatRate(proc.upload)}`,
+            `${_('Total')}: ${formatRate(totalRate)}`,
         ].join('\n');
         dialog.contentLayout.add_child(new St.Label({
             text: body,
