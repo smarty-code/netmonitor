@@ -69,6 +69,16 @@ Watch Shell errors with:
 journalctl --user -f /usr/bin/gnome-shell
 ```
 
+## Packing for GitHub
+
+```bash
+./scripts/pack.sh
+```
+
+writes `dist/netmonitor@netmonitor.shell-extension.zip`. CI runs tests and uploads that zip. Push a tag `v1.1.0` to publish a GitHub Release.
+
+The zip is the GNOME UI only. End users should clone the repo (or a tag) and run `./scripts/install.sh`.
+
 ## Layout
 
 | Path | Role |

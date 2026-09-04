@@ -3,8 +3,8 @@
     "name": "NetMonitor",
     "description": "Show live download and upload speed in the top bar, with a per-process breakdown from NetHogs.",
     "shell-version": ["50"],
-    "url": "https://github.com/netmonitor/netmonitor",
+    "url": "https://github.com/smarty-code/netmonitor",
     "settings-schema": "org.gnome.shell.extensions.netmonitor",
     "gettext-domain": "netmonitor",
-    "version": 1
+    "version": 2
 }

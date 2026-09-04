@@ -16,6 +16,8 @@ Python agent (user service)
 /usr/sbin/nethogs -t -d 1 -v 0 -C
 ```
 
+GNOME System Monitor (`gnome-system-monitor`) only graphs **interface totals**. It has no per-process network API, so it cannot replace NetHogs.
+
 ## Why two processes
 
 The GNOME extension only renders UI. Packet capture, parsing, process signaling, and NetHogs supervision stay in the agent so a monitoring bug cannot take down GNOME Shell.

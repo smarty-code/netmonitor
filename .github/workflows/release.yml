@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test
+        run: |
+          python3 -m pip install pytest
+          python3 -m pytest
+      - name: Pack
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip libglib2.0-bin
+          ./scripts/pack.sh
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.shell-extension.zip
+          generate_release_notes: true
+          body: |
+            ## Install from this release
+
+            The zip is the GNOME Shell UI only. Clone the tag and run the installer so the agent is installed too:
+
+            ```bash
+            git clone --branch ${{ github.ref_name }} https://github.com/smarty-code/netmonitor.git
+            cd netmonitor
+            ./scripts/install.sh
+            ```
