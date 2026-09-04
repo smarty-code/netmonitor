@@ -81,7 +81,8 @@ export const NetMonitorIndicator = GObject.registerClass({
             );
             if (this._menuOpen || forceMenu)
                 this._monitorMenu.updateStats(stats);
-        } catch {
+        } catch (error) {
+            logError(error, '[netmonitor] poll failed');
             this._failCount += 1;
             this._label.text = this._failCount >= 3 ? _('Unavailable') : _('Connecting…');
             if (this._menuOpen || forceMenu) {

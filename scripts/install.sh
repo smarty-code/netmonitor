@@ -35,11 +35,13 @@ if [[ "$DEV" -eq 1 ]]; then
   cat > "$UNIT_DST" <<EOF
 [Unit]
 Description=NetMonitor network monitoring agent (development)
-After=default.target
+After=graphical-session.target
+PartOf=graphical-session.target
 
 [Service]
 Type=simple
 WorkingDirectory=${ROOT}
+ExecStartPre=-/bin/rm -f %t/netmonitor.sock
 ExecStart=/usr/bin/python3 -m agent
 Restart=on-failure
 RestartSec=2

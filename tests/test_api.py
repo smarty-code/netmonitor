@@ -102,3 +102,16 @@ def test_kill_invalid_pid(api_server):
     response = _client_request(server.path, {"action": "kill_process", "pid": "nope"})
     assert response["ok"] is False
     assert response["error"] == "invalid_pid"
+
+
+def test_rebind_after_socket_file_removed(api_server):
+    server, _ = api_server
+    server.path.unlink()
+    deadline = time.time() + 2
+    while time.time() < deadline:
+        if server.path.exists():
+            break
+        time.sleep(0.05)
+    assert server.path.exists()
+    response = _client_request(server.path, {"action": "ping"})
+    assert response["ok"] is True

@@ -2,6 +2,8 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
 Gio._promisify(Gio.SocketClient.prototype, 'connect_async', 'connect_finish');
+Gio._promisify(Gio.OutputStream.prototype, 'write_all_async', 'write_all_finish');
+Gio._promisify(Gio.DataInputStream.prototype, 'read_line_async', 'read_line_finish_utf8');
 
 export class AgentError extends Error {
     constructor(code, message) {
@@ -13,6 +15,22 @@ export class AgentError extends Error {
 
 export function defaultSocketPath() {
     return GLib.build_filenamev([GLib.get_user_runtime_dir(), 'netmonitor.sock']);
+}
+
+function unixAddress(path) {
+    if (Gio.UnixSocketAddress?.new)
+        return Gio.UnixSocketAddress.new(path);
+    throw new AgentError('unavailable', `Cannot create Unix socket address for ${path}`);
+}
+
+function decodeLine(value) {
+    if (value === null || value === undefined)
+        return null;
+    if (Array.isArray(value))
+        return decodeLine(value[0]);
+    if (value instanceof Uint8Array)
+        return new TextDecoder().decode(value);
+    return String(value);
 }
 
 export class AgentClient {
@@ -69,11 +87,18 @@ export class AgentClient {
             return GLib.SOURCE_REMOVE;
         });
         try {
+            if (!GLib.file_test(this._path, GLib.FileTest.EXISTS))
+                throw new AgentError('unavailable', 'Agent unavailable');
             await this._ensureConnected(cancellable);
             const encoded = `${JSON.stringify(body)}\n`;
-            await this._writeAll(new TextEncoder().encode(encoded), cancellable);
-            const line = await this._readLine(cancellable);
-            if (line === null)
+            const bytes = new TextEncoder().encode(encoded);
+            await this._output.write_all_async(bytes, GLib.PRIORITY_DEFAULT, cancellable);
+            const raw = await this._input.read_line_async(
+                GLib.PRIORITY_DEFAULT,
+                cancellable
+            );
+            const line = decodeLine(raw);
+            if (!line)
                 throw new AgentError('disconnected', 'Agent closed the connection');
             const parsed = JSON.parse(line);
             if (parsed.ok === false) {
@@ -99,52 +124,22 @@ export class AgentClient {
     async _ensureConnected(cancellable) {
         if (this._connection && !this._connection.is_closed())
             return;
-        const address = Gio.UnixSocketAddress.new(this._path);
         const client = new Gio.SocketClient();
         try {
-            this._connection = await client.connect_async(address, cancellable);
-        } catch {
-            throw new AgentError('unavailable', 'Agent unavailable');
+            this._connection = await client.connect_async(
+                unixAddress(this._path),
+                cancellable
+            );
+        } catch (error) {
+            throw new AgentError(
+                'unavailable',
+                error.message || 'Agent unavailable'
+            );
         }
         this._output = this._connection.get_output_stream();
         this._input = new Gio.DataInputStream({
             base_stream: this._connection.get_input_stream(),
             close_base_stream: false,
-        });
-    }
-
-    _writeAll(bytes, cancellable) {
-        return new Promise((resolve, reject) => {
-            this._output.write_all_async(
-                bytes,
-                GLib.PRIORITY_DEFAULT,
-                cancellable,
-                (stream, result) => {
-                    try {
-                        stream.write_all_finish(result);
-                        resolve();
-                    } catch (error) {
-                        reject(error);
-                    }
-                }
-            );
-        });
-    }
-
-    _readLine(cancellable) {
-        return new Promise((resolve, reject) => {
-            this._input.read_line_async(
-                GLib.PRIORITY_DEFAULT,
-                cancellable,
-                (stream, result) => {
-                    try {
-                        const [line] = stream.read_line_finish_utf8(result);
-                        resolve(line);
-                    } catch (error) {
-                        reject(error);
-                    }
-                }
-            );
         });
     }
 }

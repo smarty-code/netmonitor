@@ -46,19 +46,31 @@ class AgentServer:
 
     def start(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        if self._path.exists():
-            self._path.unlink()
-        self._sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self._sock.bind(str(self._path))
-        os.chmod(self._path, 0o600)
-        self._sock.listen(config.SOCKET_BACKLOG)
-        self._sock.settimeout(0.5)
+        self._bind()
         self._stop.clear()
         self._thread = threading.Thread(
             target=self._accept_loop, name="netmonitor-socket", daemon=True
         )
         self._thread.start()
         self._log.info("listening on %s", self._path)
+
+    def _bind(self) -> None:
+        if self._sock is not None:
+            try:
+                self._sock.close()
+            except OSError:
+                pass
+            self._sock = None
+        try:
+            self._path.unlink(missing_ok=True)
+        except OSError:
+            pass
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.bind(str(self._path))
+        os.chmod(self._path, 0o600)
+        sock.listen(config.SOCKET_BACKLOG)
+        sock.settimeout(0.5)
+        self._sock = sock
 
     def stop(self) -> None:
         self._stop.set()
@@ -129,11 +141,19 @@ class AgentServer:
         return body
 
     def _accept_loop(self) -> None:
-        assert self._sock is not None
         while not self._stop.is_set():
+            sock = self._sock
+            if sock is None:
+                continue
             try:
-                conn, _ = self._sock.accept()
+                conn, _ = sock.accept()
             except TimeoutError:
+                if not self._path.exists():
+                    self._log.warning("socket path vanished; rebinding %s", self._path)
+                    try:
+                        self._bind()
+                    except OSError:
+                        self._log.exception("socket rebind failed")
                 continue
             except OSError:
                 if self._stop.is_set():
