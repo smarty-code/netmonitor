@@ -14,7 +14,7 @@ import {MonitorMenu} from './menu.js';
 import {setTextIfChanged, stabilizeRateLabel} from './ui.js';
 
 export const NetMonitorIndicator = GObject.registerClass({
-    GTypeName: 'NetMonitorIndicatorV3',
+    GTypeName: 'NetMonitorIndicatorV4',
 }, class NetMonitorIndicator extends PanelMenu.Button {
     _init(extension) {
         super._init(0.5, _('Network Monitor'), false);
@@ -31,7 +31,7 @@ export const NetMonitorIndicator = GObject.registerClass({
             y_align: Clutter.ActorAlign.CENTER,
             x_expand: false,
         });
-        stabilizeRateLabel(this._label, ' font-size: 50%;');
+        stabilizeRateLabel(this._label, ' font-size: 9pt;');
         this.add_child(this._label);
 
         this._monitorMenu = new MonitorMenu(this.menu, {

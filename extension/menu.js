@@ -107,11 +107,10 @@ export class MonitorMenu {
                 row.update(process);
         }
 
-        for (let i = newcomers.length - 1; i >= 0; i--) {
-            const {key, process} = newcomers[i];
+        for (const {key, process} of newcomers) {
             const row = createProcessRow(process, this._callbacks);
             this._rows.set(key, row);
-            this._processSection.addMenuItem(row, 0);
+            this._processSection.addMenuItem(row);
         }
 
         for (const [key, row] of this._rows.entries()) {

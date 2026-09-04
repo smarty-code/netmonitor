@@ -118,7 +118,7 @@ class NetworkState:
             kept.append(current)
             seen.add(key)
         newcomers = [proc for proc in active if _process_key(proc) not in seen]
-        self._processes = list(reversed(newcomers)) + kept
+        self._processes = kept + newcomers
         self._timestamp = time.time()
         self._status = STATUS_OK
         self._status_message = ""
