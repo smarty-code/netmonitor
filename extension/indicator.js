@@ -37,8 +37,7 @@ export const NetMonitorIndicator = GObject.registerClass({
         this._monitorMenu = new MonitorMenu(this.menu, {
             onRetry: () => this._poll(true),
             onPrefs: () => this._openPrefs(),
-            onDetails: pid => this._showDetails(pid),
-            onKill: (pid, force) => this._kill(pid, force),
+            onSelect: process => this._showDetails(process),
         });
 
         this.menu.connect('open-state-changed', (_menu, open) => {
@@ -95,8 +94,11 @@ export const NetMonitorIndicator = GObject.registerClass({
                 stats.total?.download || 0,
                 stats.total?.upload || 0
             ));
-            if (this._menuOpen || forceMenu)
-                this._monitorMenu.updateStats(stats);
+            if (this._menuOpen || forceMenu) {
+                this._monitorMenu.updateStats(stats, {
+                    syncProcesses: forceMenu,
+                });
+            }
         } catch (error) {
             logError(error, '[netmonitor] poll failed');
             this._failCount += 1;
@@ -113,43 +115,97 @@ export const NetMonitorIndicator = GObject.registerClass({
         }
     }
 
-    async _showDetails(pid) {
-        try {
-            const response = await this._client.getProcess(pid);
-            const proc = response.process;
-            const dialog = new ModalDialog.ModalDialog();
-            const body = [
-                proc.name,
-                `${_('PID')}: ${proc.pid}`,
-                `${_('Command')}: ${proc.command}`,
-                `↓ ${formatRate(proc.download)}`,
-                `↑ ${formatRate(proc.upload)}`,
-            ].join('\n');
-            dialog.contentLayout.add_child(new St.Label({
-                text: body,
-                style_class: 'netmonitor-status',
-            }));
-            dialog.setButtons([{
-                label: _('Close'),
-                action: () => dialog.close(),
-                default: true,
-            }]);
-            dialog.open();
-        } catch (error) {
-            Main.notifyError(_('NetMonitor'), error.message);
-        }
+    _afterMenuClose(callback) {
+        this.menu.close();
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 150, () => {
+            try {
+                callback();
+            } catch (error) {
+                logError(error, '[netmonitor] after menu close');
+            }
+            return GLib.SOURCE_REMOVE;
+        });
     }
 
-    async _kill(pid, force) {
-        try {
-            await this._client.killProcess(pid, force);
+    _showDetails(process) {
+        this._afterMenuClose(() => {
+            this._openDetails(process).catch(error => {
+                const message = error instanceof AgentError
+                    ? error.message
+                    : _('Could not open process details');
+                Main.notifyError(_('NetMonitor'), message);
+            });
+        });
+    }
+
+    async _openDetails(process) {
+        let proc = process;
+        if (process?.pid > 1) {
+            try {
+                const response = await this._client.getProcess(process.pid);
+                proc = response.process;
+            } catch (error) {
+                logError(error, '[netmonitor] get_process');
+            }
+        }
+        if (!proc)
+            throw new AgentError('not_found', _('Process is no longer available'));
+
+        const dialog = new ModalDialog.ModalDialog();
+        const body = [
+            proc.name,
+            `${_('PID')}: ${proc.pid}`,
+            `${_('Command')}: ${proc.command || '—'}`,
+            `↓ ${formatRate(proc.download)}`,
+            `↑ ${formatRate(proc.upload)}`,
+        ].join('\n');
+        dialog.contentLayout.add_child(new St.Label({
+            text: body,
+            style_class: 'netmonitor-status',
+        }));
+
+        const buttons = [];
+        if (proc.pid > 1) {
+            buttons.push({
+                label: _('Kill Process'),
+                action: () => {
+                    dialog.close();
+                    this._killNow(proc.pid, false);
+                },
+            });
+            buttons.push({
+                label: _('Force Kill'),
+                action: () => {
+                    dialog.close();
+                    this._killNow(proc.pid, true);
+                },
+            });
+        }
+        buttons.push({
+            label: _('Close'),
+            action: () => dialog.close(),
+            default: true,
+        });
+        dialog.setButtons(buttons);
+        if (!dialog.open())
+            throw new AgentError('unavailable', _('Could not open process details'));
+    }
+
+    _killNow(pid, force) {
+        const target = Number.parseInt(pid, 10);
+        log(`[netmonitor] ${force ? 'force_kill' : 'kill'} pid=${target}`);
+        this._client.killProcess(target, force).then(() => {
+            Main.notify(
+                _('NetMonitor'),
+                force ? _('Process killed') : _('Stop signal sent')
+            );
             this._poll(true);
-        } catch (error) {
+        }).catch(error => {
             const message = error instanceof AgentError
                 ? error.message
                 : _('Could not terminate the process');
             Main.notifyError(_('NetMonitor'), message);
-        }
+        });
     }
 
     destroy() {

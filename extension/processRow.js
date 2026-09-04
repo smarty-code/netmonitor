@@ -2,17 +2,24 @@ import Clutter from 'gi://Clutter';
 import Pango from 'gi://Pango';
 import St from 'gi://St';
 
-import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-import {formatPair, formatRate} from './format.js';
+import {formatRate} from './format.js';
 import {setTextIfChanged, stabilizeRateLabel} from './ui.js';
 
+export function processKey(process) {
+    if (process.pid > 1)
+        return String(process.pid);
+    return `0:${process.name}:${process.command}`;
+}
+
 export function createProcessRow(process, actions) {
-    const item = new PopupMenu.PopupSubMenuMenuItem('', false);
+    const item = new PopupMenu.PopupMenuItem('');
     item._netPid = process.pid;
+    item._process = process;
 
     item.label.add_style_class_name('netmonitor-process-name');
+    item.label.x_expand = true;
     item.label.x_align = Clutter.ActorAlign.START;
     item.label.clutter_text.ellipsize = Pango.EllipsizeMode.END;
 
@@ -23,24 +30,15 @@ export function createProcessRow(process, actions) {
         x_expand: false,
     });
     stabilizeRateLabel(rateLabel);
-    item.insert_child_below(rateLabel, item._triangleBin);
+    item.add_child(rateLabel);
 
-    const ratesItem = new PopupMenu.PopupMenuItem('', {reactive: false});
-    ratesItem.label.add_style_class_name('netmonitor-process-rates');
-    stabilizeRateLabel(ratesItem.label);
-    item.menu.addMenuItem(ratesItem);
-    item.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-    item.menu.addAction(_('Details'), () => actions.onDetails(item._netPid));
-    if (process.pid > 1) {
-        item.menu.addAction(_('Kill Process'), () => actions.onKill(item._netPid, false));
-        item.menu.addAction(_('Force Kill'), () => actions.onKill(item._netPid, true));
-    }
+    item.connect('activate', () => actions.onSelect(item._process));
 
     item.update = proc => {
         item._netPid = proc.pid;
+        item._process = proc;
         setTextIfChanged(item.label, proc.name);
         setTextIfChanged(rateLabel, formatRate(proc.total));
-        setTextIfChanged(ratesItem.label, formatPair(proc.download, proc.upload));
     };
     Object.defineProperty(item, 'pid', {
         get() {

@@ -16,6 +16,7 @@ from agent.parser import (
     is_refresh_marker,
     parse_snapshot_lines,
 )
+from agent.process_manager import enrich_process
 
 
 class NetworkState:
@@ -94,6 +95,7 @@ class NetworkState:
         return self._apply_unlocked(processes)
 
     def _apply_unlocked(self, processes: list[ProcessStats]) -> NetworkSnapshot:
+        processes = [enrich_process(proc) for proc in processes]
         ordered = sorted(processes, key=lambda p: p.total, reverse=True)
         self._processes = ordered
         self._total_download = sum(p.download for p in ordered)

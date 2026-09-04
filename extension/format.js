@@ -1,9 +1,9 @@
-const UNITS = ['B/s ', 'KB/s', 'MB/s', 'GB/s', 'TB/s'];
+const UNITS = ['KB/s', 'MB/s', 'GB/s', 'TB/s'];
 const KIB = 1024;
 
-function fourCharNumber(value, integer) {
+function fourCharNumber(value) {
     let text;
-    if (integer || value >= 99.95)
+    if (value >= 99.95)
         text = String(Math.round(value));
     else if (value >= 9.995)
         text = value.toFixed(1);
@@ -13,13 +13,13 @@ function fourCharNumber(value, integer) {
 }
 
 export function formatRate(bytesPerSec) {
-    let value = Math.abs(Number(bytesPerSec) || 0);
+    let value = Math.abs(Number(bytesPerSec) || 0) / KIB;
     let unit = 0;
     while (value >= KIB && unit < UNITS.length - 1) {
         value /= KIB;
         unit += 1;
     }
-    return `${fourCharNumber(value, unit === 0)} ${UNITS[unit]}`;
+    return `${fourCharNumber(value)} ${UNITS[unit]}`;
 }
 
 export function formatArrowRate(arrow, bytesPerSec) {

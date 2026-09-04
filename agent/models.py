@@ -61,13 +61,22 @@ class NetworkSnapshot:
 
 
 def format_rate(bytes_per_sec: float) -> str:
-    """Human-readable byte rate for terminal output."""
-    value = abs(bytes_per_sec)
+    """Human-readable byte rate. Smallest unit is KB/s."""
+    value = abs(bytes_per_sec) / KB
     if value < KB:
-        return f"{bytes_per_sec:.0f} B/s"
-    if value < KB * KB:
-        return f"{bytes_per_sec / KB:.1f} KB/s"
-    return f"{bytes_per_sec / (KB * KB):.2f} MB/s"
+        if value < 10:
+            return f"{value:.2f} KB/s"
+        if value < 100:
+            return f"{value:.1f} KB/s"
+        return f"{value:.0f} KB/s"
+    value /= KB
+    if value < KB:
+        if value < 10:
+            return f"{value:.2f} MB/s"
+        if value < 100:
+            return f"{value:.1f} MB/s"
+        return f"{value:.0f} MB/s"
+    return f"{value / KB:.2f} GB/s"
 
 
 def snapshot_as_dict(snapshot: NetworkSnapshot) -> dict:

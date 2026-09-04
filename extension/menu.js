@@ -2,7 +2,7 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import {formatArrowRate} from './format.js';
-import {createProcessRow} from './processRow.js';
+import {createProcessRow, processKey} from './processRow.js';
 import {setTextIfChanged, stabilizeRateLabel} from './ui.js';
 
 export class MonitorMenu {
@@ -61,7 +61,7 @@ export class MonitorMenu {
         this._clearRows();
     }
 
-    updateStats(stats) {
+    updateStats(stats, {syncProcesses = true} = {}) {
         const total = stats.total || {download: 0, upload: 0};
         setTextIfChanged(this._downItem.label, formatArrowRate('↓', total.download));
         setTextIfChanged(this._upItem.label, formatArrowRate('↑', total.upload));
@@ -82,7 +82,8 @@ export class MonitorMenu {
 
         this._statusItem.visible = false;
         this._retryItem.visible = false;
-        this._syncProcesses(stats.processes || []);
+        if (syncProcesses)
+            this._syncProcesses(stats.processes || []);
     }
 
     _setStatus(text, canRetry) {
@@ -94,11 +95,12 @@ export class MonitorMenu {
     _syncProcesses(processes) {
         const seen = new Set();
         processes.forEach((process, index) => {
-            seen.add(process.pid);
-            let row = this._rows.get(process.pid);
+            const key = processKey(process);
+            seen.add(key);
+            let row = this._rows.get(key);
             if (!row) {
                 row = createProcessRow(process, this._callbacks);
-                this._rows.set(process.pid, row);
+                this._rows.set(key, row);
                 this._processSection.addMenuItem(row, index);
                 return;
             }
@@ -108,10 +110,10 @@ export class MonitorMenu {
                 this._processSection.moveMenuItem(row, index);
         });
 
-        for (const [pid, row] of this._rows.entries()) {
-            if (seen.has(pid))
+        for (const [key, row] of this._rows.entries()) {
+            if (seen.has(key))
                 continue;
-            this._rows.delete(pid);
+            this._rows.delete(key);
             row.destroy();
         }
 

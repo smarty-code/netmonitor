@@ -66,9 +66,12 @@ export class AgentClient {
     }
 
     async killProcess(pid, force = false) {
+        const n = Number.parseInt(pid, 10);
+        if (!Number.isInteger(n) || n <= 1)
+            throw new AgentError('invalid_pid', 'pid must be greater than 1');
         return this.request({
             action: force ? 'force_kill_process' : 'kill_process',
-            pid,
+            pid: n,
         });
     }
 

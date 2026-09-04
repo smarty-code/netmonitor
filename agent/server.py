@@ -127,10 +127,14 @@ class AgentServer:
                 data["command"] = cmdline
             return {"process": data}
         if action == "kill_process":
-            self._processes.terminate(payload.get("pid"), force=False)
+            pid = payload.get("pid")
+            self._log.info("kill_process pid=%s", pid)
+            self._processes.terminate(pid, force=False)
             return {"status": "ok"}
         if action == "force_kill_process":
-            self._processes.terminate(payload.get("pid"), force=True)
+            pid = payload.get("pid")
+            self._log.info("force_kill_process pid=%s", pid)
+            self._processes.terminate(pid, force=True)
             return {"status": "ok"}
         raise ProcessError("unknown_action", "unknown action")
 

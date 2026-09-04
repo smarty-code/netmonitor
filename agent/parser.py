@@ -8,6 +8,8 @@ import re
 from agent.config import KB
 from agent.models import ProcessStats
 
+GENERIC_NAMES = frozenset({"exe", "self", ""})
+
 LINE_RE = re.compile(
     r"^(?P<ident>.+?)\s+(?P<sent>-?\d+(?:\.\d+)?)\s+(?P<recv>-?\d+(?:\.\d+)?)\s*$"
 )
@@ -49,12 +51,21 @@ def _executable_path(command: str) -> str:
     return command
 
 
+def _looks_like_connection(command: str) -> bool:
+    return ":" in command and "-" in command and command[:1].isdigit()
+
+
 def _display_name(command: str, pid: int) -> str:
-    if pid == 0 and "unknown" in command.lower():
+    if pid == 0 and (
+        "unknown" in command.lower() or _looks_like_connection(command)
+    ):
         return "Unknown"
     binary = _executable_path(command)
+    base = os.path.basename(binary) if "/" in binary else binary
+    if pid > 1 and base in GENERIC_NAMES:
+        return f"pid {pid}"
     if binary.startswith("/"):
-        binary = os.path.basename(binary) or binary
+        binary = base or binary
     if len(binary) > 48:
         return binary[:45] + "..."
     return binary

@@ -11,9 +11,9 @@ from agent.parser import (
 
 
 def test_format_rate():
-    assert format_rate(0) == "0 B/s"
-    assert format_rate(512) == "512 B/s"
-    assert format_rate(1024) == "1.0 KB/s"
+    assert format_rate(0) == "0.00 KB/s"
+    assert format_rate(512) == "0.50 KB/s"
+    assert format_rate(1024) == "1.00 KB/s"
     assert "MB/s" in format_rate(8.42 * 1024 * 1024)
 
 
@@ -39,6 +39,21 @@ def test_parse_strips_long_command_line():
     assert stats.pid == 8406
     assert stats.name == "chrome"
     assert stats.command == "/opt/google/chrome/chrome"
+
+
+def test_parse_proc_self_exe():
+    stats = parse_line("/proc/self/exe/39464/1000 0.10 0.20")
+    assert stats is not None
+    assert stats.pid == 39464
+    assert stats.name == "pid 39464"
+    assert stats.command == "/proc/self/exe"
+
+
+def test_parse_unattributed_connection():
+    stats = parse_line("10.144.87.194:56946-52.55.202.196:443 0.00 0.10")
+    assert stats is not None
+    assert stats.pid == 0
+    assert stats.name == "Unknown"
 
 
 def test_parse_unknown_tcp():
