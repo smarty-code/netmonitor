@@ -31,7 +31,7 @@ export const NetMonitorIndicator = GObject.registerClass({
             y_align: Clutter.ActorAlign.CENTER,
             x_expand: false,
         });
-        stabilizeRateLabel(this._label);
+        stabilizeRateLabel(this._label, ' font-size: 50%;');
         this.add_child(this._label);
 
         this._monitorMenu = new MonitorMenu(this.menu, {
@@ -96,7 +96,7 @@ export const NetMonitorIndicator = GObject.registerClass({
             ));
             if (this._menuOpen || forceMenu) {
                 this._monitorMenu.updateStats(stats, {
-                    syncProcesses: forceMenu,
+                    syncProcesses: true,
                 });
             }
         } catch (error) {

@@ -8,9 +8,9 @@ export function setTextIfChanged(label, text) {
         label.text = text;
 }
 
-export function stabilizeRateLabel(label) {
+export function stabilizeRateLabel(label, extraStyle = '') {
     label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
     label.x_expand = false;
     label.x_align = Clutter.ActorAlign.END;
-    label.set_style(RATE_STYLE);
+    label.set_style(`${RATE_STYLE}${extraStyle}`);
 }

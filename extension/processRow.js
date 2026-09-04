@@ -8,7 +8,7 @@ import {formatRate} from './format.js';
 import {setTextIfChanged, stabilizeRateLabel} from './ui.js';
 
 export function processKey(process) {
-    if (process.pid > 1)
+    if (process.pid > 0)
         return String(process.pid);
     return `0:${process.name}:${process.command}`;
 }
@@ -22,6 +22,7 @@ export function createProcessRow(process, actions) {
     item.label.x_expand = true;
     item.label.x_align = Clutter.ActorAlign.START;
     item.label.clutter_text.ellipsize = Pango.EllipsizeMode.END;
+    item.label.clutter_text.line_wrap = false;
 
     const rateLabel = new St.Label({
         style_class: 'netmonitor-process-total',

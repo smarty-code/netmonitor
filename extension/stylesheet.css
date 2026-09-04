@@ -8,7 +8,7 @@
 }
 
 .netmonitor-indicator-label {
-    min-width: 15em;
+    font-size: 50%;
     text-align: right;
 }
 
@@ -22,10 +22,14 @@
 
 .netmonitor-process-name {
     font-weight: 600;
+    width: 16em;
+    min-width: 16em;
+    max-width: 16em;
 }
 
 .netmonitor-process-total {
     min-width: 7em;
+    width: 7em;
     margin-left: 12px;
     text-align: right;
 }

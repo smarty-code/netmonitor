@@ -18,7 +18,24 @@ def test_snapshot_after_two_refreshes():
     assert snapshot.total_download == 2048.0
 
 
-def test_sorts_by_total_and_drops_vanished():
+def test_keeps_order_hides_idle_and_inserts_new_at_top():
+    state = NetworkState()
+    state.feed_line("Refreshing:")
+    state.feed_line("/usr/bin/a/10/1000 1.0 1.0")
+    state.feed_line("/usr/bin/b/11/1000 5.0 5.0")
+    first = state.feed_line("Refreshing:")
+    assert first is not None
+    assert [p.pid for p in first.processes] == [11, 10]
+
+    state.feed_line("/usr/bin/a/10/1000 2.0 2.0")
+    state.feed_line("/usr/bin/b/11/1000 0.0 0.0")
+    state.feed_line("/usr/bin/c/12/1000 3.0 3.0")
+    second = state.feed_line("Refreshing:")
+    assert second is not None
+    assert [p.pid for p in second.processes] == [12, 10]
+
+
+def test_drops_vanished():
     state = NetworkState()
     state.feed_line("Refreshing:")
     state.feed_line("/usr/bin/a/1/1000 0.1 0.1")

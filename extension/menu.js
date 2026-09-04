@@ -94,21 +94,25 @@ export class MonitorMenu {
 
     _syncProcesses(processes) {
         const seen = new Set();
-        processes.forEach((process, index) => {
+        const newcomers = [];
+        for (const process of processes) {
+            if ((Number(process.total) || 0) <= 0)
+                continue;
             const key = processKey(process);
             seen.add(key);
-            let row = this._rows.get(key);
-            if (!row) {
-                row = createProcessRow(process, this._callbacks);
-                this._rows.set(key, row);
-                this._processSection.addMenuItem(row, index);
-                return;
-            }
-            row.update(process);
-            const items = this._processSection._getMenuItems();
-            if (items[index] !== row)
-                this._processSection.moveMenuItem(row, index);
-        });
+            const row = this._rows.get(key);
+            if (!row)
+                newcomers.push({key, process});
+            else
+                row.update(process);
+        }
+
+        for (let i = newcomers.length - 1; i >= 0; i--) {
+            const {key, process} = newcomers[i];
+            const row = createProcessRow(process, this._callbacks);
+            this._rows.set(key, row);
+            this._processSection.addMenuItem(row, 0);
+        }
 
         for (const [key, row] of this._rows.entries()) {
             if (seen.has(key))
