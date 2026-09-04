@@ -1,7 +1,15 @@
-.netmonitor-indicator-label {
-    min-width: 11em;
-    text-align: center;
+.netmonitor-rate,
+.netmonitor-indicator-label,
+.netmonitor-header-rate,
+.netmonitor-process-total,
+.netmonitor-process-rates {
+    font-family: monospace;
     font-feature-settings: "tnum";
+}
+
+.netmonitor-indicator-label {
+    min-width: 15em;
+    text-align: right;
 }
 
 .netmonitor-header-title {
@@ -9,7 +17,7 @@
 }
 
 .netmonitor-header-rate {
-    font-feature-settings: "tnum";
+    min-width: 8em;
 }
 
 .netmonitor-process-name {
@@ -17,12 +25,14 @@
 }
 
 .netmonitor-process-total {
-    font-feature-settings: "tnum";
+    min-width: 7em;
+    margin-left: 12px;
+    text-align: right;
 }
 
 .netmonitor-process-rates {
     font-size: 0.9em;
-    font-feature-settings: "tnum";
+    min-width: 15em;
 }
 
 .netmonitor-status {

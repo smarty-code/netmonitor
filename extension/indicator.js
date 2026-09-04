@@ -11,6 +11,7 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import {AgentClient, AgentError} from './client.js';
 import {formatPair, formatRate} from './format.js';
 import {MonitorMenu} from './menu.js';
+import {setTextIfChanged, stabilizeRateLabel} from './ui.js';
 
 export const NetMonitorIndicator = GObject.registerClass({
     GTypeName: 'NetMonitorIndicator',
@@ -25,15 +26,17 @@ export const NetMonitorIndicator = GObject.registerClass({
         this._failCount = 0;
 
         this._label = new St.Label({
-            text: '↓ 0 B/s ↑ 0 B/s',
+            text: formatPair(0, 0),
             style_class: 'netmonitor-indicator-label',
             y_align: Clutter.ActorAlign.CENTER,
+            x_expand: false,
         });
+        stabilizeRateLabel(this._label);
         this.add_child(this._label);
 
         this._monitorMenu = new MonitorMenu(this.menu, {
             onRetry: () => this._poll(true),
-            onPrefs: () => this._extension.openPreferences(),
+            onPrefs: () => this._openPrefs(),
             onDetails: pid => this._showDetails(pid),
             onKill: (pid, force) => this._kill(pid, force),
         });
@@ -56,6 +59,19 @@ export const NetMonitorIndicator = GObject.registerClass({
         return Math.max(1, this._settings.get_int('refresh-interval') || 1);
     }
 
+    _openPrefs() {
+        this.menu.close();
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 150, () => {
+            try {
+                this._extension.openPreferences();
+            } catch (error) {
+                logError(error, '[netmonitor] openPreferences');
+                Main.notifyError(_('NetMonitor'), _('Could not open settings'));
+            }
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
     _restartTimer() {
         if (this._sourceId) {
             GLib.source_remove(this._sourceId);
@@ -75,16 +91,19 @@ export const NetMonitorIndicator = GObject.registerClass({
         try {
             const stats = await this._client.getStats();
             this._failCount = 0;
-            this._label.text = formatPair(
+            setTextIfChanged(this._label, formatPair(
                 stats.total?.download || 0,
                 stats.total?.upload || 0
-            );
+            ));
             if (this._menuOpen || forceMenu)
                 this._monitorMenu.updateStats(stats);
         } catch (error) {
             logError(error, '[netmonitor] poll failed');
             this._failCount += 1;
-            this._label.text = this._failCount >= 3 ? _('Unavailable') : _('Connecting…');
+            setTextIfChanged(
+                this._label,
+                this._failCount >= 3 ? _('Unavailable') : _('Connecting…')
+            );
             if (this._menuOpen || forceMenu) {
                 if (this._failCount >= 3)
                     this._monitorMenu.showUnavailable();

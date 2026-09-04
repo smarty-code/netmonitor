@@ -21,13 +21,14 @@ if command -v gnome-extensions >/dev/null; then
     --extra-source=indicator.js \
     --extra-source=menu.js \
     --extra-source=processRow.js \
+    --extra-source=ui.js \
     -f -o "$OUT_DIR"
 else
   (
     cd "$TMP"
     zip -qr "${OUT_DIR}/${ZIP_NAME}" \
       metadata.json extension.js prefs.js stylesheet.css \
-      client.js format.js indicator.js menu.js processRow.js schemas
+      client.js format.js indicator.js menu.js processRow.js ui.js schemas
   )
 fi
 

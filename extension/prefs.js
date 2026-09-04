@@ -6,7 +6,7 @@ import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Ex
 const POSITIONS = ['left', 'center', 'right'];
 
 export default class NetMonitorPreferences extends ExtensionPreferences {
-    fillPreferencesWindow(window) {
+    async fillPreferencesWindow(window) {
         const settings = this.getSettings();
         window.add(this._appearancePage(settings));
         window.add(this._updatesPage(settings));
@@ -23,7 +23,9 @@ export default class NetMonitorPreferences extends ExtensionPreferences {
         });
 
         const labels = [_('Left'), _('Center'), _('Right')];
-        const model = new Gtk.StringList({strings: labels});
+        const model = new Gtk.StringList();
+        for (const label of labels)
+            model.append(label);
         const positionRow = new Adw.ComboRow({
             title: _('Position'),
             subtitle: _('Left, center, or right area of the top bar'),

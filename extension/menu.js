@@ -1,8 +1,9 @@
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-import {formatRate} from './format.js';
+import {formatArrowRate} from './format.js';
 import {createProcessRow} from './processRow.js';
+import {setTextIfChanged, stabilizeRateLabel} from './ui.js';
 
 export class MonitorMenu {
     constructor(menu, callbacks) {
@@ -16,12 +17,14 @@ export class MonitorMenu {
         this._title.label.add_style_class_name('netmonitor-header-title');
         menu.addMenuItem(this._title);
 
-        this._downItem = new PopupMenu.PopupMenuItem('↓ 0 B/s', {reactive: false});
+        this._downItem = new PopupMenu.PopupMenuItem(formatArrowRate('↓', 0), {reactive: false});
         this._downItem.label.add_style_class_name('netmonitor-header-rate');
+        stabilizeRateLabel(this._downItem.label);
         menu.addMenuItem(this._downItem);
 
-        this._upItem = new PopupMenu.PopupMenuItem('↑ 0 B/s', {reactive: false});
+        this._upItem = new PopupMenu.PopupMenuItem(formatArrowRate('↑', 0), {reactive: false});
         this._upItem.label.add_style_class_name('netmonitor-header-rate');
+        stabilizeRateLabel(this._upItem.label);
         menu.addMenuItem(this._upItem);
 
         menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem(_('Applications')));
@@ -60,8 +63,8 @@ export class MonitorMenu {
 
     updateStats(stats) {
         const total = stats.total || {download: 0, upload: 0};
-        this._downItem.label.text = `↓ ${formatRate(total.download)}`;
-        this._upItem.label.text = `↑ ${formatRate(total.upload)}`;
+        setTextIfChanged(this._downItem.label, formatArrowRate('↓', total.download));
+        setTextIfChanged(this._upItem.label, formatArrowRate('↑', total.upload));
 
         const status = stats.status || 'ok';
         if (status === 'nethogs_missing') {
@@ -96,11 +99,13 @@ export class MonitorMenu {
             if (!row) {
                 row = createProcessRow(process, this._callbacks);
                 this._rows.set(process.pid, row);
-                this._processSection.addMenuItem(row);
-            } else {
-                row.update(process);
+                this._processSection.addMenuItem(row, index);
+                return;
             }
-            this._processSection.moveMenuItem(row, index);
+            row.update(process);
+            const items = this._processSection._getMenuItems();
+            if (items[index] !== row)
+                this._processSection.moveMenuItem(row, index);
         });
 
         for (const [pid, row] of this._rows.entries()) {
