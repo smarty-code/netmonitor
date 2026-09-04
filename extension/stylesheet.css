@@ -1,0 +1,30 @@
+.netmonitor-indicator-label {
+    min-width: 11em;
+    text-align: center;
+    font-feature-settings: "tnum";
+}
+
+.netmonitor-header-title {
+    font-weight: bold;
+}
+
+.netmonitor-header-rate {
+    font-feature-settings: "tnum";
+}
+
+.netmonitor-process-name {
+    font-weight: 600;
+}
+
+.netmonitor-process-total {
+    font-feature-settings: "tnum";
+}
+
+.netmonitor-process-rates {
+    font-size: 0.9em;
+    font-feature-settings: "tnum";
+}
+
+.netmonitor-status {
+    padding: 8px 12px;
+}

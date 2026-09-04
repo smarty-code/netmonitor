@@ -18,7 +18,20 @@ mkdir -p "$(dirname "$EXT_DST")" "$LIB_DST" "$UNIT_DIR"
 glib-compile-schemas "${ROOT}/extension/schemas"
 
 if [[ "$DEV" -eq 1 ]]; then
-  ln -sfn "${ROOT}/extension" "$EXT_DST"
+  if [[ -L "$EXT_DST" ]]; then
+    rm -f "$EXT_DST"
+  elif [[ -d "$EXT_DST" ]]; then
+    dest_real="$(realpath "$EXT_DST")"
+    src_real="$(realpath "${ROOT}/extension")"
+    if [[ "$dest_real" == "$src_real" ]]; then
+      echo "Keeping extension sources at $EXT_DST"
+    else
+      rm -rf "$EXT_DST"
+    fi
+  fi
+  if [[ ! -e "$EXT_DST" ]]; then
+    ln -sfn "${ROOT}/extension" "$EXT_DST"
+  fi
   cat > "$UNIT_DST" <<EOF
 [Unit]
 Description=NetMonitor network monitoring agent (development)

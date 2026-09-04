@@ -1,0 +1,10 @@
+{
+    "uuid": "netmonitor@netmonitor",
+    "name": "NetMonitor",
+    "description": "Show live download and upload speed in the top bar, with a per-process breakdown from NetHogs.",
+    "shell-version": ["50"],
+    "url": "https://github.com/netmonitor/netmonitor",
+    "settings-schema": "org.gnome.shell.extensions.netmonitor",
+    "gettext-domain": "netmonitor",
+    "version": 1
+}

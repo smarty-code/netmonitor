@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.netmonitor" path="/org/gnome/shell/extensions/netmonitor/">
+    <key name="refresh-interval" type="i">
+      <default>1</default>
+      <summary>Refresh interval in seconds</summary>
+      <description>How often the extension polls the monitoring agent.</description>
+    </key>
+  </schema>
+</schemalist>
